@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "parallight-lab": {
+      "command": "node",
+      "args": ["./bundle/server.js"],
+      "cwd": ".",
+      "env": { "PARALLIGHT_BACKEND_URL": "https://beta.lab-agent.parallight.ai" }
+    }
+  }
+}
