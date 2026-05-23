@@ -1,6 +1,6 @@
 ---
 name: parallight-lab
-description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agent 实战(指挥 agent 写代码、理解、验证)。触发条件:用户消息以 :lab 开头(:lab / :lab-login / :lab-start <lab-id> / :lab-status / :lab-kb / :lab-logout / :lab-exit),或用自然语言要求登录 Parallight、查看/开始/继续 lab、问 lab 进度或知识点、退出 lab。所有能力来自 parallight-lab MCP server 的工具。"
+description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agent 实战(指挥 agent 写代码、理解、验证)。触发条件:用户消息以 :lab 开头(:lab / :lab-login / :lab-start <lab-id> / :lab-status / :lab-kb / :lab-review / :lab-private-message / :lab-read / :lab-reply / :lab-logout / :lab-exit),或用自然语言要求登录 Parallight、查看/开始/继续 lab、问 lab 进度或知识点、提交 review、给 Marvin 发私信、查看师傅回复、退出 lab。所有能力来自 parallight-lab MCP server 的工具。"
 ---
 
 # Parallight Lab (Codex)
@@ -23,6 +23,7 @@ description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agen
 - 任何一步报错,把错误**原样**告诉学员,别假装成功。
 
 ### `:lab`(或"看有哪些 lab" / "开始 lab")
+0. 先调 `get_inbox`(`mark_seen` 传 **false**,只 peek 不标记已读)。若有来自师傅的未读批改/回复,在最前面提示一行「📬 师傅回复了你 X 条,用 `:lab-read` 查看」,再继续列 lab。没有就跳过。
 1. 调 `list_labs`。
 2. 若返回"还没登录" → 引导学员先 `:lab-login`,**不要继续**。
 3. 若有进行中的 lab,先显示当前进度。
@@ -43,6 +44,26 @@ description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agen
 
 ### `:lab-kb`(或"这个 lab 有哪些知识点")
 调 `get_lab_kb`,**只读**展示知识点 checklist(已完成/未完成)。不要在这里推进任何 checkpoint。没有进行中的 lab → 提示先 `:lab-start`。
+
+### `:lab-review`(或"提交 review" / "我做完了想让师傅批改")
+1. 以师傅口吻问 **2-3 个反思题**,让学员**自由打字**回答(Feynman 式)。不要降级成编号选择。
+2. 用 shell 抓当前 lab 工作目录源码(排除 `node_modules`/`.env`/`.git`;单文件 ~20KB 截断,总量 ~100KB)。
+3. 调 `submit_review`(`reflections` = 整理好的问答文本,`code_snapshot` = 代码)。
+4. 成功后告诉学员编号 +「师傅 1-2 天内批改,`:lab-read` 查看」。
+
+### `:lab-private-message`(或"给 Marvin 发私信")
+- **明确告诉学员**:只有真人 Marvin 会读,通常 1-2 天回。
+- 让学员自由打字写内容。
+- **发送前确认**(编号:`1` 确认发送 / `2` 再改改 / `3` 取消)。选 `1` 才调 `send_message`。
+- 成功后简短确认,提示 `:lab-read` 看回复。
+
+### `:lab-read`(或"看师傅回复了吗")
+调 `get_inbox`(`mark_seen` 传 true)。清楚呈现每条批改/回复;对 review 批改提示可用 `:lab-reply <编号>` 回复。没有未读就说目前没有新回复。
+
+### `:lab-reply`(或"回复师傅的批改")
+- 从消息里取 review 编号;没给就让学员先 `:lab-read`。
+- 让学员自由打字写回复,调 `post_review_reply`(`review_id` + `body`)。
+- 成功后简短确认。
 
 ### `:lab-logout`
 调 `auth_logout` 清除本地凭证,简短确认。
