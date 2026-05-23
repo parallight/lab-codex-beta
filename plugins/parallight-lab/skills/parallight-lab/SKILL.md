@@ -1,6 +1,6 @@
 ---
 name: parallight-lab
-description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agent 实战(指挥 agent 写代码、理解、验证)。触发条件:用户消息以 :lab 开头(:lab / :lab-login / :lab-start <lab-id> / :lab-status / :lab-kb / :lab-review / :lab-read / :lab-private-message / :lab-reply <id> / :lab-logout / :lab-exit),或用自然语言要求登录 Parallight、查看/开始/继续 lab、问 lab 进度或知识点、提交 review、给 Marvin 发私信、查看师傅回复、退出 lab。所有能力来自 parallight-lab MCP server 的工具。"
+description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agent 实战(指挥 agent 写代码、理解、验证)。触发条件:用户消息以 :lab 开头(:lab-help / :lab / :lab-login / :lab-start <lab-id> / :lab-resume / :lab-status / :lab-kb / :lab-review / :lab-read / :lab-private-message / :lab-reply <id> / :lab-logout / :lab-exit),或用自然语言要求登录 Parallight、查看/开始/继续 lab、问 lab 进度或知识点、提交 review、给 Marvin 发私信、查看师傅回复、退出 lab。所有能力来自 parallight-lab MCP server 的工具。"
 ---
 
 <!-- AUTO-GENERATED from commands-src/*.md — do not edit. Run `pnpm gen:commands`. -->
@@ -15,6 +15,25 @@ description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agen
 - 注:若 `start_lab` 注入的师傅人格提到 "AskUserQuestion / 选项卡",那是 Claude Code 专用 —— 在 Codex 里按上面规则用编号列表替代。
 
 ## 命令分发
+
+### `:lab-help`(或"有哪些命令" / "lab 帮助")
+向学员展示下面这份 Parallight Lab 命令清单(原样、简洁):
+
+- :lab-help — 列出所有 lab 命令
+- :lab — Parallight Lab 主入口 — 显示可用 lab 列表 + 当前进度 + 未读通知
+- :lab-login — 登录 Parallight Lab（邮箱 + 6 位验证码 OTP）
+- :lab-start — 开始一个 lab — 写 starter 文件、注入 LLM 配置、加载师傅人格
+- :lab-resume — 恢复上次中断的 lab(常用于开了新 VSCode 窗口、师傅人格没了)
+- :lab-status — 师傅总结当前 lab 的进度
+- :lab-kb — 显示当前 lab 的知识点清单（只读）
+- :lab-review — 提交一次 lab review 给真人 Marvin 批改
+- :lab-read — 查看真人 Marvin 的批改和私信回复
+- :lab-private-message — 给真人 Marvin 发一条私信（只有他本人会读）
+- :lab-reply — 回复师傅对某次 review 的批改
+- :lab-logout — 退出 Parallight Lab 登录，清除本地凭证
+- :lab-exit — 退出当前 lab，清除注入的师傅人格
+
+学员问某条具体怎么用,就简短解释那一条。
 
 ### `:lab`
 0. 在显示 lab 列表**之前**，先调 `get_inbox`（**`mark_seen` 传 false**，只 peek 不标记已读）。若有来自师傅的未读批改/回复，在最前面提示一行「📬 师傅回复了你的 X 条内容，:lab-read 查看」，然后再正常显示 lab 列表。没有就跳过这一步。
@@ -46,6 +65,14 @@ description: "Parallight Lab —— 在 Codex 里跟着师傅 Marvin 学 AI agen
    - **不要**让学员自己去终端跑 preflight/baseline —— 用编号:1 我来跑 / 2 我自己跑 / 3 先讲讲，选"我来跑"你就 shell 跑，并用 **🔬 实验观察**块呈现关键结果（别让学员只看到折叠的终端输出）。
    - 之后**每条回复**都以 `📚 [Lab <lab-id> · X% complete]` 结尾。
 4. 离散选择给学员现成选项挑（别让他打字猜）；开放式理解检验保留打字；实验输出用 🔬 块重新呈现（别让学员看折叠的终端输出）。
+
+### `:lab-resume`(或"继续上次的 lab" / "恢复 lab")
+学员想恢复之前的 lab session(通常是开了新窗口、师傅人格 + lab 上下文没了)。
+
+- 调 `resume_lab`:`$ARGUMENTS` 给了 lab id 就传 `lab_id`,否则不传(= 恢复最近活跃的那个)。
+- 若返回「没有可恢复的 session」→ 引导用 :lab 选一个开始。
+- 按返回的操作指令以师傅身份「欢迎回来,我们继续 <lab>」开场。**不要重写 starter 文件**(它们还在盘上)。
+- 提一句:想找回**之前的聊天记录**,那是 cc 自带的 `claude --resume` / `--continue`(和这个不同);:lab-resume 负责把师傅 + lab 状态找回来。
 
 ### `:lab-status`(或"我现在 lab 进度")
 调用 `get_lab_status` 工具。它会返回当前进度 + 一条 SYSTEM 指示，让你以师傅的口吻总结进度。按指示用师傅人格总结，并以 `📚 [Lab <id> · X% complete]` 结尾。

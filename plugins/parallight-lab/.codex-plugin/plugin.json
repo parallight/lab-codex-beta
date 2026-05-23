@@ -1,6 +1,6 @@
 {
   "name": "parallight-lab",
-  "version": "0.1.2-phase1",
+  "version": "0.1.3-phase1",
   "description": "Parallight Lab — agent-oriented learning plugin for Codex CLI. Learn to build AI agents by directing them, guided by a resident master craftsman (Marvin). Zero API keys (LLM runs through Parallight's backend).\n\nTrigger when the user's message starts with :lab (:lab, :lab-login, :lab-start <lab-id>, :lab-status, :lab-kb, :lab-logout, :lab-exit) or asks in natural language to log into Parallight, browse/start/continue a lab, check lab progress, or exit a lab.",
   "author": {
     "name": "Marvin Gao",
